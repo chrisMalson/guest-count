@@ -18,7 +18,6 @@ const App = () => {
         },
       });
 
-      console.log(data);
       setCount(data.count);
     };
 
@@ -27,34 +26,29 @@ const App = () => {
 
   useEffect(() => {
     setShowCapacityWarning(count >= 250 ? true : false);
-
-    const updateCount = async () => {
-      const { data } = await axios({
-        method: "get",
-        url: "https://api.jsonbin.io/b/5e8fa748172eb64389611f6b",
-        headers: {
-          "secret-key":
-            "$2b$10$uQu337FpZHoeD1Ah4SIUGOzxKNhiz2ixQopfnYM2HAWvkOdahQDdS",
-        },
-      });
-
-      console.log(data);
-
-      if (count !== data.count) {
-        setCount(data.count);
-      }
-    };
-
-    updateCount();
   }, [count]);
+
+  const updateCount = async () => {
+    const { data } = await axios({
+      method: "get",
+      url: "https://api.jsonbin.io/b/5e8fa748172eb64389611f6b",
+      headers: {
+        "secret-key":
+          "$2b$10$uQu337FpZHoeD1Ah4SIUGOzxKNhiz2ixQopfnYM2HAWvkOdahQDdS",
+      },
+    });
+
+    return data.count;
+  };
 
   const increaseCount = async () => {
     if (count >= 999) {
       alert(`Can't go any higher!`);
     } else {
+      const updatedCount = await updateCount();
       const result = await axios.put(
         "https://api.jsonbin.io/b/5e8fa748172eb64389611f6b",
-        { count: count + 1 },
+        { count: updatedCount + 1 },
         {
           headers: {
             "Content-Type": "application/json",
@@ -73,9 +67,10 @@ const App = () => {
     if (count <= 0) {
       alert(`No negative guest counts!`);
     } else {
+      const updatedCount = await updateCount();
       const result = await axios.put(
         "https://api.jsonbin.io/b/5e8fa748172eb64389611f6b",
-        { count: count - 1 },
+        { count: updatedCount - 1 },
         {
           headers: {
             "Content-Type": "application/json",
@@ -151,6 +146,9 @@ const App = () => {
   return (
     <div className="container">
       <h1>Guest Count</h1>
+      {showCapacityWarning && (
+        <h4>The store is at or past capacity; start limiting entry</h4>
+      )}
       <h3>{count}</h3>
       {!showReset && (
         <>
@@ -172,9 +170,6 @@ const App = () => {
           <button onClick={clearCountForReal}>I'm sure!</button>
           <button onClick={actuallyNeverMind}>On second thought, nah</button>
         </>
-      )}
-      {showCapacityWarning && (
-        <h4>The store is at or past capacity; start limiting entry</h4>
       )}
     </div>
   );
