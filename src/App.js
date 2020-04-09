@@ -1,26 +1,183 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import "./App.css";
+import axios from "axios";
 
-function App() {
+const App = () => {
+  const [count, setCount] = useState(0);
+  const [showReset, setShowReset] = useState(false);
+  const [showCapacityWarning, setShowCapacityWarning] = useState(false);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      const { data } = await axios({
+        method: "get",
+        url: "https://api.jsonbin.io/b/5e8fa748172eb64389611f6b",
+        headers: {
+          "secret-key":
+            "$2b$10$uQu337FpZHoeD1Ah4SIUGOzxKNhiz2ixQopfnYM2HAWvkOdahQDdS",
+        },
+      });
+
+      console.log(data);
+      setCount(data.count);
+    };
+
+    fetchCount();
+  }, []);
+
+  useEffect(() => {
+    setShowCapacityWarning(count >= 250 ? true : false);
+
+    const updateCount = async () => {
+      const { data } = await axios({
+        method: "get",
+        url: "https://api.jsonbin.io/b/5e8fa748172eb64389611f6b",
+        headers: {
+          "secret-key":
+            "$2b$10$uQu337FpZHoeD1Ah4SIUGOzxKNhiz2ixQopfnYM2HAWvkOdahQDdS",
+        },
+      });
+
+      console.log(data);
+
+      if (count !== data.count) {
+        setCount(data.count);
+      }
+    };
+
+    updateCount();
+  }, [count]);
+
+  const increaseCount = async () => {
+    if (count >= 999) {
+      alert(`Can't go any higher!`);
+    } else {
+      const result = await axios.put(
+        "https://api.jsonbin.io/b/5e8fa748172eb64389611f6b",
+        { count: count + 1 },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "secret-key":
+              "$2b$10$uQu337FpZHoeD1Ah4SIUGOzxKNhiz2ixQopfnYM2HAWvkOdahQDdS",
+            versioning: false,
+          },
+        }
+      );
+
+      setCount(result.data.data.count);
+    }
+  };
+
+  const decreaseCount = async () => {
+    if (count <= 0) {
+      alert(`No negative guest counts!`);
+    } else {
+      const result = await axios.put(
+        "https://api.jsonbin.io/b/5e8fa748172eb64389611f6b",
+        { count: count - 1 },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "secret-key":
+              "$2b$10$uQu337FpZHoeD1Ah4SIUGOzxKNhiz2ixQopfnYM2HAWvkOdahQDdS",
+            versioning: false,
+          },
+        }
+      );
+
+      setCount(result.data.data.count);
+    }
+  };
+
+  const clearCount = () => {
+    setShowReset(true);
+  };
+
+  const clearCountForReal = async () => {
+    const result = await axios.put(
+      "https://api.jsonbin.io/b/5e8fa748172eb64389611f6b",
+      { count: 0 },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "secret-key":
+            "$2b$10$uQu337FpZHoeD1Ah4SIUGOzxKNhiz2ixQopfnYM2HAWvkOdahQDdS",
+          versioning: false,
+        },
+      }
+    );
+
+    setCount(result.data.data.count);
+    setShowReset(false);
+  };
+
+  const actuallyNeverMind = () => {
+    setShowReset(false);
+  };
+
+  const manualSetCount = async () => {
+    const newValue = prompt("What is the current guest count? (0-999)");
+
+    switch (newValue) {
+      case null:
+        break;
+      default:
+        if (isNaN(newValue)) {
+          alert(`That's not a number!`);
+        } else if (newValue >= 1000) {
+          alert("Too big! 999 is the max");
+        } else if (newValue <= -1) {
+          alert("No negative guest counts. Duh");
+        } else {
+          const result = await axios.put(
+            "https://api.jsonbin.io/b/5e8fa748172eb64389611f6b",
+            { count: parseInt(newValue, 10) },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                "secret-key":
+                  "$2b$10$uQu337FpZHoeD1Ah4SIUGOzxKNhiz2ixQopfnYM2HAWvkOdahQDdS",
+                versioning: false,
+              },
+            }
+          );
+
+          setCount(result.data.data.count);
+        }
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="container">
+      <h1>Guest Count</h1>
+      <h3>{count}</h3>
+      {!showReset && (
+        <>
+          <div className="plus-and-minus">
+            <button className="minus" onClick={decreaseCount}>
+              -
+            </button>
+            <button className="plus" onClick={increaseCount}>
+              +
+            </button>
+          </div>
+          <button onClick={clearCount}>Reset</button>
+          <button onClick={manualSetCount}>Change current guest count</button>
+        </>
+      )}
+      {showReset && (
+        <>
+          <h4>Are you sure?</h4>
+          <button onClick={clearCountForReal}>I'm sure!</button>
+          <button onClick={actuallyNeverMind}>On second thought, nah</button>
+        </>
+      )}
+      {showCapacityWarning && (
+        <h4>The store is at or past capacity; start limiting entry</h4>
+      )}
     </div>
   );
-}
+};
 
 export default App;
