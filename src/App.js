@@ -4,6 +4,7 @@ import axios from "axios";
 
 const App = () => {
   const [count, setCount] = useState(0);
+  const [showCount, setShowCount] = useState(true);
   const [showReset, setShowReset] = useState(false);
   const [showCapacityWarning, setShowCapacityWarning] = useState(false);
 
@@ -45,6 +46,7 @@ const App = () => {
     if (count >= 999) {
       alert(`Can't go any higher!`);
     } else {
+      setShowCount(false);
       const updatedCount = await updateCount();
       const result = await axios.put(
         "https://api.jsonbin.io/b/5e8fa748172eb64389611f6b",
@@ -60,6 +62,7 @@ const App = () => {
       );
 
       setCount(result.data.data.count);
+      setShowCount(true);
     }
   };
 
@@ -67,6 +70,7 @@ const App = () => {
     if (count <= 0) {
       alert(`No negative guest counts!`);
     } else {
+      setShowCount(false);
       const updatedCount = await updateCount();
       const result = await axios.put(
         "https://api.jsonbin.io/b/5e8fa748172eb64389611f6b",
@@ -82,6 +86,7 @@ const App = () => {
       );
 
       setCount(result.data.data.count);
+      setShowCount(true);
     }
   };
 
@@ -149,7 +154,7 @@ const App = () => {
       {showCapacityWarning && (
         <h4>The store is at or past capacity; start limiting entry</h4>
       )}
-      <h3>{count}</h3>
+      <h3>{showCount ? count : "-"}</h3>
       {!showReset && (
         <>
           <div className="plus-and-minus">
